@@ -1,0 +1,5 @@
+env = Environment(TARGET_ARCH="x86_64")
+env.SConscript("src/sconscript",
+	exports={"env": env},
+	variant_dir="build", duplicate=False)
+env.Default("build")
