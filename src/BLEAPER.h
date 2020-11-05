@@ -5,16 +5,5 @@
 
 #define REAPERAPI_MINIMAL
 #define REAPERAPI_WANT_ShowConsoleMsg
+#define REAPERAPI_WANT_StuffMIDIMessage
 
-class RTMidiIn: public midi_Input {
-	public:
-	RTMidiIn();
-	virtual ~RTMidiIn();
-	virtual void start() override { };
-	virtual void stop() override {} ;
-	virtual MIDI_eventlist *GetReadBuf() { return nullptr; }
-	virtual void SwapBufs(unsigned int timestamp) override {};
-
-};
-
-midi_Input* createMidiInput();
