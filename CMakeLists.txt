@@ -1,0 +1,25 @@
+cmake_minimum_required (VERSION 3.13.3)
+
+project(BLEAPER)
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    message("Install prefix: Setting install prefix to Home:$ENV{APPDATA}")
+    set (CMAKE_INSTALL_PREFIX "$ENV{APPDATA}/" CACHE PATH "default install path" FORCE ) 
+endif()
+message("Install prefix: ${CMAKE_INSTALL_PREFIX}")
+
+if(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    message("debug mode")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0") 
+else(CMAKE_BUILD_TYPE MATCHES DEBUG)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DRELEASEVERSION")
+endif(CMAKE_BUILD_TYPE MATCHES DEBUG) 
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+add_subdirectory(src)
