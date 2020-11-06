@@ -1,10 +1,27 @@
 #include <string>
 #include <cstring>
+#include <winrt/Windows.Devices.Midi.h>
 
 #define REAPERAPI_IMPLEMENT
 #include "BLEAPER.h"
+#include "MidiDeviceService.h"
 
 using namespace std;
+using namespace winrt::Windows::Devices::Midi;
+
+MidiDeviceService *midiDeviceService = nullptr;
+
+void menuhook(const char *menuidstr, void *menu, int flag)
+{
+	switch (flag)
+	{
+	case 0:
+		AddExtensionsMainMenu();
+		break;
+	case 1:
+		break;
+	}
+}
 
 extern "C"
 {
@@ -18,10 +35,17 @@ extern "C"
 			{
 				return 0; // Incompatible.
 			}
+			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
+			midiDeviceService->startWatching();
+			rec->Register("hookcustommenu", menuhook);
 			return 1;
 		}
 		else
 		{
+			rec->Register("-hookcustommenu", menuhook);
+			midiDeviceService->stopWatching();
+			delete midiDeviceService;
+
 			return 0;
 		}
 	}

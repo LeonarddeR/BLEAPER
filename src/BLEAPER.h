@@ -6,4 +6,6 @@
 #define REAPERAPI_MINIMAL
 #define REAPERAPI_WANT_ShowConsoleMsg
 #define REAPERAPI_WANT_StuffMIDIMessage
+#define REAPERAPI_WANT_AddExtensionsMainMenu
 
+void menuhook(const char *menuidstr, void *menu, int flag);
