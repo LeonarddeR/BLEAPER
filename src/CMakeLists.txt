@@ -19,7 +19,10 @@ add_library(BLEAPER SHARED
 
 target_link_libraries(BLEAPER ${BLEAPER_LIBS})
 
-target_include_directories(BLEAPER PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(BLEAPER PUBLIC
+	${CMAKE_SOURCE_DIR}/include
+	${CMAKE_SOURCE_DIR}/include/WDL
+)
 
 set_target_properties(BLEAPER PROPERTIES PREFIX "")
 set_target_properties(BLEAPER PROPERTIES OUTPUT_NAME "reaper_BLEAPER")

@@ -4,6 +4,7 @@
 #include <winrt/Windows.Devices.Enumeration.h>
 #include <winrt/Windows.Devices.Midi.h>
 #include <winrt/Windows.Foundation.h>
+#include "BLEAPER.h"
 
 class MidiDeviceService
 {

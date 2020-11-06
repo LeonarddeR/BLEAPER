@@ -1,6 +1,8 @@
+#include <Windows.h>
 #include <string>
 #include <cstring>
 #include <winrt/Windows.Devices.Midi.h>
+#include "WDL/win32_helpers.h"
 
 #define REAPERAPI_IMPLEMENT
 #include "BLEAPER.h"
@@ -11,12 +13,16 @@ using namespace winrt::Windows::Devices::Midi;
 
 MidiDeviceService *midiDeviceService = nullptr;
 
-void menuhook(const char *menuidstr, void *menu, int flag)
+void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 {
 	switch (flag)
 	{
 	case 0:
-		AddExtensionsMainMenu();
+		if (!strcmp(menuidstr, "Main extensions"))
+		{
+			int iPos = GetMenuItemCount(hMenu);
+			auto hSubMenu = InsertSubMenu(hMenu, iPos, "BLEAPER MIDI Input");
+		}
 		break;
 	case 1:
 		break;
@@ -37,12 +43,13 @@ extern "C"
 			}
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
+			AddExtensionsMainMenu();
 			rec->Register("hookcustommenu", menuhook);
 			return 1;
 		}
 		else
 		{
-			rec->Register("-hookcustommenu", menuhook);
+			rec->Register("-Ehookcustommenu", menuhook);
 			midiDeviceService->stopWatching();
 			delete midiDeviceService;
 
