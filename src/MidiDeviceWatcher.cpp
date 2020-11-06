@@ -18,7 +18,7 @@ MidiDeviceWatcher::~MidiDeviceWatcher()
 	deviceWatcher.Added(addedEventToken);
 	deviceWatcher.Removed(removedEventToken);
 	deviceWatcher.Updated(updatedEventToken);
-	deviceWatcher.EnumerationCompleted(enumerationCompleted);
+	deviceWatcher.EnumerationCompleted(enumerationCompletedEventToken);
 }
 
 void MidiDeviceWatcher::start()
