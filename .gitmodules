@@ -1,3 +1,0 @@
-[submodule "include/WDL"]
-	path = include/WDL
-	url = https://github.com/justinfrankel/WDL.git

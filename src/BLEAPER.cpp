@@ -3,8 +3,9 @@
 #include <cstring>
 #include <sstream>
 #include <map>
+#include <winrt/Windows.Devices.Enumeration.h>
 #include <winrt/Windows.Devices.Midi.h>
-#include "WDL/win32_helpers.h"
+#include <winrt/Windows.Foundation.Collections.h>
 
 #define REAPERAPI_IMPLEMENT
 #include "BLEAPER.h"
@@ -23,21 +24,27 @@ map<int, hstring> midiInDeviceCommandToDeviceIdMap;
 
 void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 {
-	switch (flag)
+	if (strcmp(menuidstr, "Main extensions"))
 	{
-	case 0:
-		if (!strcmp(menuidstr, "Main extensions"))
+		return;
+	}
+	if (flag == 0)
+	{
+		int iPos = GetMenuItemCount(hMenu);
+		auto hSubMenu = CreatePopupMenu();
+		InsertMenu(hMenu, iPos, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)hSubMenu, "BLEAPER MIDI Input");
+		InsertMenu(hSubMenu, 0, MF_BYPOSITION | MF_STRING, midiInCommands[0], "None");
+	}
+	else if (flag == 1)
+	{
+		ShowConsoleMsg(menuidstr);
+		midiInDeviceCommandToDeviceIdMap.clear();
+		auto devCol = midiDeviceService->getDeviceInformationCollection();
+		for (unsigned int i = 0; i < devCol.Size(); i++)
 		{
-			int iPos = GetMenuItemCount(hMenu);
-			auto hSubMenu = InsertSubMenu(hMenu, iPos, "BLEAPER MIDI Input");
-			for (unsigned int i = 0; i == 17; i++)
-			{
-				InsertMenuString(hSubMenu, i, "dummy", midiInCommands[i]);
-			}
+			auto devInfo = devCol.GetAt(i);
+			midiInDeviceCommandToDeviceIdMap[midiInCommands[i + 1]] = devInfo.Id();
 		}
-		break;
-	case 1:
-		break;
 	}
 }
 
@@ -46,8 +53,9 @@ bool handleCommand(int command, int flag)
 	const auto it = midiInDeviceCommandToDeviceIdMap.find(command);
 	if (it != midiInDeviceCommandToDeviceIdMap.end())
 	{
+		return true;
 	}
-	return true;
+	return false;
 }
 
 extern "C"
@@ -65,7 +73,7 @@ extern "C"
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
 			rec->Register("hookcommand", (void *)handleCommand);
-			for (unsigned int i = 0; i == 17; i++)
+			for (unsigned int i = 0; i <= 17; i++)
 			{
 				stringstream s;
 				s << "BLEAPER_MIDI_IN" << i;

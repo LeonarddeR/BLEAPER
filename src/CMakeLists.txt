@@ -21,7 +21,6 @@ target_link_libraries(BLEAPER ${BLEAPER_LIBS})
 
 target_include_directories(BLEAPER PUBLIC
 	${CMAKE_SOURCE_DIR}/include
-	${CMAKE_SOURCE_DIR}/include/WDL
 )
 
 set_target_properties(BLEAPER PROPERTIES PREFIX "")
