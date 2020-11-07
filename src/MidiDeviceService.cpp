@@ -43,11 +43,8 @@ void MidiDeviceService::stopWatching()
 
 hstring MidiDeviceService::getCurrentDeviceFromConfig()
 {
-	auto idMultiByte = GetExtState(CONFIG_SECTION, "midiInDevice");
-	auto idLength = MultiByteToWideChar(CP_UTF8, 0, idMultiByte, -1, nullptr, 0);
-	wstring id(idLength, L'\0');
-	auto charsConverted = MultiByteToWideChar(CP_UTF8, 0, idMultiByte, -1, id.data(), idLength);
-	return hstring{id};
+	auto deviceId = GetExtState(CONFIG_SECTION, "midiInDevice");
+	return hstringFromCharString(deviceId);
 }
 
 void MidiDeviceService::setCurrentDeviceInConfig(hstring const &deviceId)
@@ -57,10 +54,7 @@ void MidiDeviceService::setCurrentDeviceInConfig(hstring const &deviceId)
 		SetExtState(CONFIG_SECTION, "midiInDevice", "", true);
 		return;
 	}
-	auto idLength = WideCharToMultiByte(CP_UTF8, 0, deviceId.c_str(), -1, nullptr, 0, nullptr, nullptr);
-	string idMultiByte(idLength, '\0');
-	auto charsConverted = WideCharToMultiByte(CP_UTF8, 0, deviceId.c_str(), -1, idMultiByte.data(), idLength, nullptr, nullptr);
-	SetExtState(CONFIG_SECTION, "midiInDevice", idMultiByte.c_str(), true);
+	SetExtState(CONFIG_SECTION, "midiInDevice", hstringToCharString(deviceId), true);
 }
 
 void MidiDeviceService::connectDevice(hstring const &deviceId, bool updateConfig = true)
@@ -88,6 +82,10 @@ void MidiDeviceService::deviceWatcher_added(DeviceWatcher const &sender, DeviceI
 	{
 		updateDevices();
 	}
+	if (getCurrentDeviceFromConfig() == args.Id())
+	{
+		connectDevice(args.Id(), false);
+	}
 }
 
 void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const &sender, DeviceInformationUpdate const &args)
@@ -95,6 +93,11 @@ void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const &sender, Devic
 	if (enumerationCompleted)
 	{
 		updateDevices();
+	}
+	if (getCurrentDeviceFromConfig() == args.Id())
+	{
+		// Disconnect
+		connectDevice(L"", false);
 	}
 }
 
