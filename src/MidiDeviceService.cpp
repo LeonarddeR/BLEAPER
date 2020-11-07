@@ -41,7 +41,29 @@ void MidiDeviceService::stopWatching()
 	}
 }
 
-void MidiDeviceService::connectDevice(DeviceInformation const &deviceInfo)
+hstring MidiDeviceService::getCurrentDeviceFromConfig()
+{
+	auto idMultiByte = GetExtState(CONFIG_SECTION, "midiInDevice");
+	auto idLength = MultiByteToWideChar(CP_UTF8, 0, idMultiByte, -1, nullptr, 0);
+	wstring id(idLength, L'\0');
+	auto charsConverted = MultiByteToWideChar(CP_UTF8, 0, idMultiByte, -1, id.data(), idLength);
+	return hstring{id};
+}
+
+void MidiDeviceService::setCurrentDeviceInConfig(hstring const &deviceId)
+{
+	if (deviceId.empty())
+	{
+		SetExtState(CONFIG_SECTION, "midiInDevice", "", true);
+		return;
+	}
+	auto idLength = WideCharToMultiByte(CP_UTF8, 0, deviceId.c_str(), -1, nullptr, 0, nullptr, nullptr);
+	string idMultiByte(idLength, '\0');
+	auto charsConverted = WideCharToMultiByte(CP_UTF8, 0, deviceId.c_str(), -1, idMultiByte.data(), idLength, nullptr, nullptr);
+	SetExtState(CONFIG_SECTION, "midiInDevice", idMultiByte.c_str(), true);
+}
+
+void MidiDeviceService::connectDevice(hstring const &deviceId, bool updateConfig = true)
 {
 	if (currentDevice)
 	{
@@ -51,16 +73,12 @@ void MidiDeviceService::connectDevice(DeviceInformation const &deviceInfo)
 		}
 		currentDevice = nullptr;
 	}
-	if (!deviceInfo)
+	if (deviceId.empty())
 	{
 		return;
 	}
-	currentDevice = MidiInPort::FromIdAsync(deviceInfo.Id()).get();
-	auto id = deviceInfo.Id().c_str();
-	auto idLength = WideCharToMultiByte(CP_UTF8, 0, id, -1, nullptr, 0, nullptr, nullptr);
-	string idMultiByte(idLength, '\0');
-	auto charsConverted = WideCharToMultiByte(CP_UTF8, 0, id, -1, idMultiByte.data(), idLength, nullptr, nullptr);
-	SetExtState(CONFIG_SECTION, "midiInDevice", idMultiByte.c_str(), true);
+	currentDevice = MidiInPort::FromIdAsync(deviceId).get();
+	setCurrentDeviceInConfig(deviceId);
 	messageReceivedEventToken = currentDevice.MessageReceived({this, &MidiDeviceService::midiInPort_messageReceived});
 }
 
@@ -93,7 +111,7 @@ void MidiDeviceService::deviceWatcher_enumerationCompleted(DeviceWatcher const &
 	enumerationCompleted = true;
 	updateDevices();
 	DeviceInformation dev = deviceInformationCollection.GetAt(0);
-	connectDevice(dev);
+	connectDevice(dev.Id());
 }
 
 void MidiDeviceService::updateDevices()

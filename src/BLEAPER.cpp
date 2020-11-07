@@ -1,6 +1,8 @@
 #include <Windows.h>
 #include <string>
 #include <cstring>
+#include <sstream>
+#include <map>
 #include <winrt/Windows.Devices.Midi.h>
 #include "WDL/win32_helpers.h"
 
@@ -9,6 +11,7 @@
 #include "MidiDeviceService.h"
 
 using namespace std;
+using namespace winrt;
 using namespace winrt::Windows::Devices::Midi;
 
 MidiDeviceService *midiDeviceService = nullptr;
@@ -29,6 +32,20 @@ void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 	}
 }
 
+// We support 16 devices and the 'None' device
+int midiInCommands[17];
+
+map<int, hstring> midiInDeviceCommandToDeviceIdMap;
+
+bool handleCommand(int command, int flag)
+{
+	const auto it = midiInDeviceCommandToDeviceIdMap.find(command);
+	if (it != midiInDeviceCommandToDeviceIdMap.end())
+	{
+	}
+	return true;
+}
+
 extern "C"
 {
 
@@ -44,12 +61,20 @@ extern "C"
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
 			AddExtensionsMainMenu();
+			rec->Register("hookcommand", (void *)handleCommand);
 			rec->Register("hookcustommenu", menuhook);
+			for (unsigned int i = 0; i == 17; i++)
+			{
+				stringstream s;
+				s << "BLEAPER_MIDI_IN" << i;
+				midiInCommands[i] = rec->Register("command_id", (void *)s.str().c_str());
+			}
 			return 1;
 		}
 		else
 		{
-			rec->Register("-Ehookcustommenu", menuhook);
+			//rec->Register("-hookcustommenu", menuhook);
+			//rec->Register("-hookcommand", (void *)handleCommand);
 			midiDeviceService->stopWatching();
 			delete midiDeviceService;
 

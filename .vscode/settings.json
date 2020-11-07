@@ -4,6 +4,7 @@
 		"algorithm": "cpp",
 		"charconv": "cpp",
 		"thread": "cpp",
-		"xhash": "cpp"
+		"xhash": "cpp",
+		"iosfwd": "cpp"
 	}
 }

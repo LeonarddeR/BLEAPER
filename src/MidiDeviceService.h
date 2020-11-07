@@ -14,7 +14,9 @@ public:
 	void startWatching();
 	void stopWatching();
 	winrt::Windows::Devices::Enumeration::DeviceInformationCollection getDeviceInformationCollection() { return deviceInformationCollection; }
-	void connectDevice(winrt::Windows::Devices::Enumeration::DeviceInformation const &deviceInfo);
+	void connectDevice(winrt::hstring const &deviceId, bool updateConfig);
+	winrt::hstring getCurrentDeviceFromConfig();
+	void setCurrentDeviceInConfig(winrt::hstring const &deviceId);
 
 private:
 	void deviceWatcher_added(winrt::Windows::Devices::Enumeration::DeviceWatcher const &sender, winrt::Windows::Devices::Enumeration::DeviceInformation const &args);
