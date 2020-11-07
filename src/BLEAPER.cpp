@@ -16,6 +16,11 @@ using namespace winrt::Windows::Devices::Midi;
 
 MidiDeviceService *midiDeviceService = nullptr;
 
+// We support 16 devices and the 'None' device
+int midiInCommands[17];
+
+map<int, hstring> midiInDeviceCommandToDeviceIdMap;
+
 void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 {
 	switch (flag)
@@ -25,17 +30,16 @@ void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 		{
 			int iPos = GetMenuItemCount(hMenu);
 			auto hSubMenu = InsertSubMenu(hMenu, iPos, "BLEAPER MIDI Input");
+			for (unsigned int i = 0; i == 17; i++)
+			{
+				InsertMenuString(hSubMenu, i, "dummy", midiInCommands[i]);
+			}
 		}
 		break;
 	case 1:
 		break;
 	}
 }
-
-// We support 16 devices and the 'None' device
-int midiInCommands[17];
-
-map<int, hstring> midiInDeviceCommandToDeviceIdMap;
 
 bool handleCommand(int command, int flag)
 {
@@ -60,15 +64,15 @@ extern "C"
 			}
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
-			AddExtensionsMainMenu();
 			rec->Register("hookcommand", (void *)handleCommand);
-			rec->Register("hookcustommenu", menuhook);
 			for (unsigned int i = 0; i == 17; i++)
 			{
 				stringstream s;
 				s << "BLEAPER_MIDI_IN" << i;
 				midiInCommands[i] = rec->Register("command_id", (void *)s.str().c_str());
 			}
+			rec->Register("hookcustommenu", menuhook);
+			AddExtensionsMainMenu();
 			return 1;
 		}
 		else
