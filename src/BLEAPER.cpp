@@ -10,49 +10,33 @@
 #define REAPERAPI_IMPLEMENT
 #include "BLEAPER.h"
 #include "MidiDeviceService.h"
+#include "WDL/win32_utf8.h"
+#include "resource.h"
 
 using namespace std;
 using namespace winrt;
 using namespace winrt::Windows::Devices::Midi;
 
+HINSTANCE pluginHInstance;
+HWND mainHwnd;
 MidiDeviceService *midiDeviceService = nullptr;
 
-// We support 16 devices and the 'None' device
-int midiInCommands[17];
-
-map<int, hstring> midiInDeviceCommandToDeviceIdMap;
+gaccel_register_t devicesDialogGaccel{{0, 0, 0}, "BLEAPER: Open MIDI devices dialog"};
 
 void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 {
-	if (strcmp(menuidstr, "Main extensions"))
+	if (strcmp(menuidstr, "Main extensions") || flag != 0)
 	{
 		return;
 	}
-	if (flag == 0)
-	{
-		int iPos = GetMenuItemCount(hMenu);
-		auto hSubMenu = CreatePopupMenu();
-		InsertMenu(hMenu, iPos, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)hSubMenu, "BLEAPER MIDI Input");
-		InsertMenu(hSubMenu, 0, MF_BYPOSITION | MF_STRING, midiInCommands[0], "None");
-	}
-	else if (flag == 1)
-	{
-		ShowConsoleMsg(menuidstr);
-		midiInDeviceCommandToDeviceIdMap.clear();
-		auto devCol = midiDeviceService->getDeviceInformationCollection();
-		for (unsigned int i = 0; i < devCol.Size(); i++)
-		{
-			auto devInfo = devCol.GetAt(i);
-			midiInDeviceCommandToDeviceIdMap[midiInCommands[i + 1]] = devInfo.Id();
-		}
-	}
+	InsertMenu(hMenu, GetMenuItemCount(hMenu), MF_BYPOSITION | MF_STRING, devicesDialogGaccel.accel.cmd, "BLEAPER MIDI Device...");
 }
 
 bool handleCommand(int command, int flag)
 {
-	const auto it = midiInDeviceCommandToDeviceIdMap.find(command);
-	if (it != midiInDeviceCommandToDeviceIdMap.end())
+	if (command == devicesDialogGaccel.accel.cmd)
 	{
+		openDeviceDialog();
 		return true;
 	}
 	return false;
@@ -60,7 +44,6 @@ bool handleCommand(int command, int flag)
 
 extern "C"
 {
-
 	REAPER_PLUGIN_DLL_EXPORT int REAPER_PLUGIN_ENTRYPOINT(REAPER_PLUGIN_HINSTANCE hInstance, reaper_plugin_info_t *rec)
 	{
 		if (rec)
@@ -70,27 +53,53 @@ extern "C"
 			{
 				return 0; // Incompatible.
 			}
+			pluginHInstance = hInstance;
+			mainHwnd = rec->hwnd_main;
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
 			rec->Register("hookcommand", (void *)handleCommand);
-			for (unsigned int i = 0; i <= 17; i++)
-			{
-				stringstream s;
-				s << "BLEAPER_MIDI_IN" << i;
-				midiInCommands[i] = rec->Register("command_id", (void *)s.str().c_str());
-			}
+			devicesDialogGaccel.accel.cmd = rec->Register("command_id", (void *)"BLEAPER_OPENDEVICESDIALOG");
+			rec->Register("gaccel", &devicesDialogGaccel);
 			rec->Register("hookcustommenu", menuhook);
 			AddExtensionsMainMenu();
 			return 1;
 		}
 		else
 		{
-			//rec->Register("-hookcustommenu", menuhook);
-			//rec->Register("-hookcommand", (void *)handleCommand);
 			midiDeviceService->stopWatching();
 			delete midiDeviceService;
-
 			return 0;
 		}
 	}
+}
+
+INT_PTR CALLBACK device_dialogProc(HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK)
+		{
+			DestroyWindow(dialog);
+			return TRUE;
+		}
+		else if (LOWORD(wParam) == IDCANCEL)
+		{
+			DestroyWindow(dialog);
+			return TRUE;
+		}
+		break;
+	case WM_CLOSE:
+		DestroyWindow(dialog);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+void openDeviceDialog()
+{
+	auto dialog = CreateDialog(pluginHInstance, MAKEINTRESOURCE(ID_DEVICES_DLG), mainHwnd, device_dialogProc);
+	auto combo = GetDlgItem(dialog, ID_MIDI_IN_DEVICE);
+	WDL_UTF8_HookComboBox(combo);
+	ShowWindow(dialog, SW_SHOWNORMAL);
 }

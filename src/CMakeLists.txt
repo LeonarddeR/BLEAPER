@@ -1,11 +1,14 @@
 set(BLEAPER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/BLEAPER.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/BLEAPER.rc
     ${CMAKE_CURRENT_SOURCE_DIR}/MidiDeviceService.cpp
+    ${CMAKE_SOURCE_DIR}/include/WDL/WDL/win32_utf8.c
 )
 
 set(BLEAPER_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/BLEAPER.h
     ${CMAKE_CURRENT_SOURCE_DIR}/MidiDeviceService.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/resource.h
 )
 
 set(BLEAPER_LIBS
@@ -21,6 +24,7 @@ target_link_libraries(BLEAPER ${BLEAPER_LIBS})
 
 target_include_directories(BLEAPER PUBLIC
 	${CMAKE_SOURCE_DIR}/include
+	${CMAKE_SOURCE_DIR}/include/WDL
 )
 
 set_target_properties(BLEAPER PROPERTIES PREFIX "")

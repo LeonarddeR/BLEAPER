@@ -19,5 +19,6 @@ typedef struct MidiDeviceCommand {
 
 void menuhook(const char *menuidstr, HMENU hMenu, int flag);
 bool handleCommand(int command, int flag);
+void openDeviceDialog();
 
 const char CONFIG_SECTION[] = "bleaper";
