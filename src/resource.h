@@ -1,0 +1,4 @@
+#define IDC_STATIC -1
+
+#define ID_DEVICES_DLG 100
+#define ID_MIDI_IN_DEVICE 101
