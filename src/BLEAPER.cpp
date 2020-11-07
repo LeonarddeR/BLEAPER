@@ -6,6 +6,7 @@
 #include <winrt/Windows.Devices.Enumeration.h>
 #include <winrt/Windows.Devices.Midi.h>
 #include <winrt/Windows.Foundation.Collections.h>
+#include <winrt/Windows.Security.Cryptography.h>
 
 #define REAPERAPI_IMPLEMENT
 #include "BLEAPER.h"
@@ -16,28 +17,13 @@
 using namespace std;
 using namespace winrt;
 using namespace winrt::Windows::Devices::Midi;
+using namespace winrt::Windows::Security::Cryptography;
 
 HINSTANCE pluginHInstance;
 HWND mainHwnd;
 MidiDeviceService *midiDeviceService = nullptr;
 
 gaccel_register_t devicesDialogGaccel{{0, 0, 0}, "BLEAPER: Open MIDI devices dialog"};
-
-hstring hstringFromCharString(const char *str)
-{
-	auto idLength = MultiByteToWideChar(CP_UTF8, 0, str, -1, nullptr, 0);
-	wstring wstr(idLength, L'\0');
-	auto charsConverted = MultiByteToWideChar(CP_UTF8, 0, str, -1, wstr.data(), idLength);
-	return hstring{wstr};
-}
-
-const char *hstringToCharString(hstring const &hstr)
-{
-	auto idLength = WideCharToMultiByte(CP_UTF8, 0, hstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
-	string str(idLength, '\0');
-	auto charsConverted = WideCharToMultiByte(CP_UTF8, 0, hstr.c_str(), -1, str.data(), idLength, nullptr, nullptr);
-	return str.c_str();
-}
 
 void menuhook(const char *menuidstr, HMENU hMenu, int flag)
 {
@@ -73,12 +59,13 @@ extern "C"
 			mainHwnd = rec->hwnd_main;
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
-			// try connecting;
+			/*// try connecting;
 			hstring currentId = midiDeviceService->getCurrentDeviceFromConfig();
 			if (!currentId.empty())
 			{
 				midiDeviceService->connectDevice(currentId, false);
 			}
+*/
 			rec->Register("hookcommand", (void *)handleCommand);
 			devicesDialogGaccel.accel.cmd = rec->Register("command_id", (void *)"BLEAPER_OPENDEVICESDIALOG");
 			rec->Register("gaccel", &devicesDialogGaccel);
@@ -107,7 +94,7 @@ DeviceDialog::DeviceDialog()
 	for (UINT i = 0; i < deviceInformationCollection.Size(); i++)
 	{
 		auto const &devInfo = deviceInformationCollection.GetAt(i);
-		ComboBox_AddString(this->comboHwnd, hstringToCharString(devInfo.Name()));
+		ComboBox_AddString(this->comboHwnd, to_string(devInfo.Name()).c_str());
 		if (initialComboSel != 0 && devInfo.Id() == midiDeviceService->getCurrentDeviceFromConfig())
 		{
 			initialComboSel = i + 1;

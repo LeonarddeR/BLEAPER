@@ -44,20 +44,15 @@ void MidiDeviceService::stopWatching()
 hstring MidiDeviceService::getCurrentDeviceFromConfig()
 {
 	auto deviceId = GetExtState(CONFIG_SECTION, "midiInDevice");
-	return hstringFromCharString(deviceId);
+	return to_hstring(deviceId);
 }
 
 void MidiDeviceService::setCurrentDeviceInConfig(hstring const &deviceId)
 {
-	if (deviceId.empty())
-	{
-		SetExtState(CONFIG_SECTION, "midiInDevice", "", true);
-		return;
-	}
-	SetExtState(CONFIG_SECTION, "midiInDevice", hstringToCharString(deviceId), true);
+	SetExtState(CONFIG_SECTION, "midiInDevice", to_string(deviceId).c_str(), true);
 }
 
-void MidiDeviceService::connectDevice(hstring const &deviceId, bool updateConfig = true)
+fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateConfig = true)
 {
 	if (currentDevice)
 	{
@@ -69,10 +64,13 @@ void MidiDeviceService::connectDevice(hstring const &deviceId, bool updateConfig
 	}
 	if (deviceId.empty())
 	{
-		return;
+		co_return;
 	}
-	currentDevice = MidiInPort::FromIdAsync(deviceId).get();
-	setCurrentDeviceInConfig(deviceId);
+		currentDevice = co_await MidiInPort::FromIdAsync(deviceId);
+	if (updateConfig)
+	{
+		setCurrentDeviceInConfig(deviceId);
+	}
 	messageReceivedEventToken = currentDevice.MessageReceived({this, &MidiDeviceService::midiInPort_messageReceived});
 }
 
@@ -81,10 +79,10 @@ void MidiDeviceService::deviceWatcher_added(DeviceWatcher const &sender, DeviceI
 	if (enumerationCompleted)
 	{
 		updateDevices();
-	}
-	if (getCurrentDeviceFromConfig() == args.Id())
-	{
-		connectDevice(args.Id(), false);
+		if (getCurrentDeviceFromConfig() == args.Id())
+		{
+			connectDevice(args.Id(), false);
+		}
 	}
 }
 
@@ -93,11 +91,11 @@ void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const &sender, Devic
 	if (enumerationCompleted)
 	{
 		updateDevices();
-	}
-	if (getCurrentDeviceFromConfig() == args.Id())
-	{
-		// Disconnect
-		connectDevice(L"", false);
+		if (getCurrentDeviceFromConfig() == args.Id())
+		{
+			// Disconnect
+			connectDevice(L"", false);
+		}
 	}
 }
 
@@ -113,8 +111,6 @@ void MidiDeviceService::deviceWatcher_enumerationCompleted(DeviceWatcher const &
 {
 	enumerationCompleted = true;
 	updateDevices();
-	DeviceInformation dev = deviceInformationCollection.GetAt(0);
-	connectDevice(dev.Id());
 }
 
 void MidiDeviceService::updateDevices()

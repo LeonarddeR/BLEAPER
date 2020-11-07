@@ -14,7 +14,7 @@ public:
 	void startWatching();
 	void stopWatching();
 	winrt::Windows::Devices::Enumeration::DeviceInformationCollection getDeviceInformationCollection() { return deviceInformationCollection; }
-	void connectDevice(winrt::hstring const &deviceId, bool updateConfig);
+	winrt::fire_and_forget connectDevice(winrt::hstring deviceId, bool updateConfig);
 	winrt::hstring getCurrentDeviceFromConfig();
 	void setCurrentDeviceInConfig(winrt::hstring const &deviceId);
 
@@ -29,7 +29,7 @@ private:
 private:
 	bool enumerationCompleted = false;
 	winrt::Windows::Devices::Enumeration::DeviceWatcher deviceWatcher{nullptr};
-	winrt::hstring deviceSelector;
+	winrt::hstring deviceSelector{};
 	winrt::event_token addedEventToken;
 	winrt::event_token removedEventToken;
 	winrt::event_token updatedEventToken;

@@ -7,6 +7,7 @@
 
 #define REAPERAPI_MINIMAL
 #define REAPERAPI_WANT_ShowConsoleMsg
+#define REAPERAPI_WANT_ShowMessageBox
 #define REAPERAPI_WANT_StuffMIDIMessage
 #define REAPERAPI_WANT_AddExtensionsMainMenu
 #define REAPERAPI_WANT_GetExtState
@@ -15,9 +16,6 @@
 void menuhook(const char *menuidstr, HMENU hMenu, int flag);
 bool handleCommand(int command, int flag);
 void openDeviceDialog();
-
-winrt::hstring hstringFromCharString(const char *str);
-const char *hstringToCharString(winrt::hstring const &hstr);
 
 class DeviceDialog;
 
