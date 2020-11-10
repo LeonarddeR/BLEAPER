@@ -66,7 +66,8 @@ fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateCo
 	}
 	if (!deviceId.empty())
 	{
-		currentDevice = co_await MidiInPort::FromIdAsync(deviceId);
+		auto task = MidiInPort::FromIdAsync(deviceId);
+		currentDevice = co_await task;
 		if (!currentDevice) {}
 		{
 			ShowMessageBox("Couldn't connect to device.", "Connection Error", 1);
