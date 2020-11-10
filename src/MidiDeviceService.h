@@ -13,9 +13,10 @@ public:
 	~MidiDeviceService();
 	void startWatching();
 	void stopWatching();
+	bool isConfiguredDevice(winrt::hstring deviceId) { return deviceId == configuredDeviceId; }
+
 	winrt::Windows::Devices::Enumeration::DeviceInformationCollection getDeviceInformationCollection() { return deviceInformationCollection; }
 	winrt::fire_and_forget connectDevice(winrt::hstring deviceId, bool updateConfig);
-	winrt::hstring getCurrentDeviceFromConfig();
 	void setCurrentDeviceInConfig(winrt::hstring const &deviceId);
 
 private:
@@ -25,6 +26,7 @@ private:
 	void deviceWatcher_enumerationCompleted(winrt::Windows::Devices::Enumeration::DeviceWatcher const &sender, winrt::Windows::Foundation::IInspectable args);
 	void midiInPort_messageReceived(winrt::Windows::Devices::Midi::MidiInPort const &source, winrt::Windows::Devices::Midi::MidiMessageReceivedEventArgs const &args);
 	void updateDevices();
+	winrt::hstring getCurrentDeviceFromConfig();
 
 private:
 	bool enumerationCompleted = false;
@@ -37,4 +39,5 @@ private:
 	winrt::event_token messageReceivedEventToken;
 	winrt::Windows::Devices::Enumeration::DeviceInformationCollection deviceInformationCollection{nullptr};
 	winrt::Windows::Devices::Midi::MidiInPort currentDevice{nullptr};
+	winrt::hstring configuredDeviceId{getCurrentDeviceFromConfig()};
 };

@@ -59,13 +59,6 @@ extern "C"
 			mainHwnd = rec->hwnd_main;
 			midiDeviceService = new MidiDeviceService(MidiInPort::GetDeviceSelector());
 			midiDeviceService->startWatching();
-			/*// try connecting;
-			hstring currentId = midiDeviceService->getCurrentDeviceFromConfig();
-			if (!currentId.empty())
-			{
-				midiDeviceService->connectDevice(currentId, false);
-			}
-*/
 			rec->Register("hookcommand", (void *)handleCommand);
 			devicesDialogGaccel.accel.cmd = rec->Register("command_id", (void *)"BLEAPER_OPENDEVICESDIALOG");
 			rec->Register("gaccel", &devicesDialogGaccel);
@@ -95,7 +88,7 @@ DeviceDialog::DeviceDialog()
 	{
 		auto const &devInfo = deviceInformationCollection.GetAt(i);
 		ComboBox_AddString(this->comboHwnd, to_string(devInfo.Name()).c_str());
-		if (initialComboSel != 0 && devInfo.Id() == midiDeviceService->getCurrentDeviceFromConfig())
+		if (initialComboSel == 0 && midiDeviceService->isConfiguredDevice(devInfo.Id()))
 		{
 			initialComboSel = i + 1;
 		}

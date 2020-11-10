@@ -59,19 +59,26 @@ fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateCo
 		if (messageReceivedEventToken)
 		{
 			currentDevice.MessageReceived(messageReceivedEventToken);
+			messageReceivedEventToken.value = 0;
 		}
+		currentDevice.Close();
 		currentDevice = nullptr;
 	}
-	if (deviceId.empty())
+	if (!deviceId.empty())
 	{
-		co_return;
-	}
 		currentDevice = co_await MidiInPort::FromIdAsync(deviceId);
+		if (!currentDevice) {}
+		{
+			ShowMessageBox("Couldn't connect to device.", "Connection Error", 1);
+			co_return;
+		}
+		messageReceivedEventToken = currentDevice.MessageReceived({this, &MidiDeviceService::midiInPort_messageReceived});
+	}
 	if (updateConfig)
 	{
-		setCurrentDeviceInConfig(deviceId);
+		configuredDeviceId = deviceId;
+		setCurrentDeviceInConfig(configuredDeviceId);
 	}
-	messageReceivedEventToken = currentDevice.MessageReceived({this, &MidiDeviceService::midiInPort_messageReceived});
 }
 
 void MidiDeviceService::deviceWatcher_added(DeviceWatcher const &sender, DeviceInformation const &args)
@@ -79,10 +86,10 @@ void MidiDeviceService::deviceWatcher_added(DeviceWatcher const &sender, DeviceI
 	if (enumerationCompleted)
 	{
 		updateDevices();
-		if (getCurrentDeviceFromConfig() == args.Id())
-		{
-			connectDevice(args.Id(), false);
-		}
+	}
+	if (configuredDeviceId == args.Id())
+	{
+		connectDevice(configuredDeviceId, false);
 	}
 }
 
@@ -91,7 +98,7 @@ void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const &sender, Devic
 	if (enumerationCompleted)
 	{
 		updateDevices();
-		if (getCurrentDeviceFromConfig() == args.Id())
+		if (configuredDeviceId == args.Id())
 		{
 			// Disconnect
 			connectDevice(L"", false);
