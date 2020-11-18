@@ -11,10 +11,10 @@ using namespace winrt::Windows::Foundation;
 MidiDeviceService::MidiDeviceService(hstring selector) : deviceSelector(selector)
 {
 	deviceWatcher = DeviceInformation::CreateWatcher(selector);
-	addedEventToken = deviceWatcher.Added({this, &MidiDeviceService::deviceWatcher_added});
-	removedEventToken = deviceWatcher.Removed({this, &MidiDeviceService::deviceWatcher_removed});
-	updatedEventToken = deviceWatcher.Updated({this, &MidiDeviceService::deviceWatcher_updated});
-	enumerationCompletedEventToken = deviceWatcher.EnumerationCompleted({this, &MidiDeviceService::deviceWatcher_enumerationCompleted});
+	addedEventToken = deviceWatcher.Added({ this, &MidiDeviceService::deviceWatcher_added });
+	removedEventToken = deviceWatcher.Removed({ this, &MidiDeviceService::deviceWatcher_removed });
+	updatedEventToken = deviceWatcher.Updated({ this, &MidiDeviceService::deviceWatcher_updated });
+	enumerationCompletedEventToken = deviceWatcher.EnumerationCompleted({ this, &MidiDeviceService::deviceWatcher_enumerationCompleted });
 }
 
 MidiDeviceService::~MidiDeviceService()
@@ -47,7 +47,7 @@ hstring MidiDeviceService::getCurrentDeviceFromConfig()
 	return to_hstring(deviceId);
 }
 
-void MidiDeviceService::setCurrentDeviceInConfig(hstring const &deviceId)
+void MidiDeviceService::setCurrentDeviceInConfig(hstring const& deviceId)
 {
 	SetExtState(CONFIG_SECTION, "midiInDevice", to_string(deviceId).c_str(), true);
 }
@@ -66,14 +66,26 @@ fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateCo
 	}
 	if (!deviceId.empty())
 	{
-		auto task = MidiInPort::FromIdAsync(deviceId);
-		currentDevice = co_await task;
-		if (!currentDevice) {}
+		auto deviceOp = MidiInPort::FromIdAsync(deviceId);
+		([](auto op) -> fire_and_forget { co_await resume_after(3s); op.Cancel(); })(deviceOp);
+		try
 		{
-			ShowMessageBox("Couldn't connect to device.", "Connection Error", 1);
+			currentDevice = co_await deviceOp;
+		}
+		catch (hresult_canceled const&)
+		{
+			currentDevice = nullptr;
+		}
+		catch (hresult_illegal_method_call const&)
+		{
+			currentDevice = nullptr;
+		}
+		if (!currentDevice)
+		{
+			ShowMessageBox("Couldn't connect to device.", "Connection Error", 0);
 			co_return;
 		}
-		messageReceivedEventToken = currentDevice.MessageReceived({this, &MidiDeviceService::midiInPort_messageReceived});
+		messageReceivedEventToken = currentDevice.MessageReceived({ this, &MidiDeviceService::midiInPort_messageReceived });
 	}
 	if (updateConfig)
 	{
@@ -82,7 +94,7 @@ fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateCo
 	}
 }
 
-void MidiDeviceService::deviceWatcher_added(DeviceWatcher const &sender, DeviceInformation const &args)
+void MidiDeviceService::deviceWatcher_added(DeviceWatcher const& sender, DeviceInformation const& args)
 {
 	if (enumerationCompleted)
 	{
@@ -94,7 +106,7 @@ void MidiDeviceService::deviceWatcher_added(DeviceWatcher const &sender, DeviceI
 	}
 }
 
-void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const &sender, DeviceInformationUpdate const &args)
+void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const& sender, DeviceInformationUpdate const& args)
 {
 	if (enumerationCompleted)
 	{
@@ -107,7 +119,7 @@ void MidiDeviceService::deviceWatcher_removed(DeviceWatcher const &sender, Devic
 	}
 }
 
-void MidiDeviceService::deviceWatcher_updated(DeviceWatcher const &sender, DeviceInformationUpdate const &args)
+void MidiDeviceService::deviceWatcher_updated(DeviceWatcher const& sender, DeviceInformationUpdate const& args)
 {
 	if (enumerationCompleted)
 	{
@@ -115,7 +127,7 @@ void MidiDeviceService::deviceWatcher_updated(DeviceWatcher const &sender, Devic
 	}
 }
 
-void MidiDeviceService::deviceWatcher_enumerationCompleted(DeviceWatcher const &sender, IInspectable args)
+void MidiDeviceService::deviceWatcher_enumerationCompleted(DeviceWatcher const& sender, IInspectable args)
 {
 	enumerationCompleted = true;
 	updateDevices();
@@ -126,7 +138,7 @@ void MidiDeviceService::updateDevices()
 	deviceInformationCollection = DeviceInformation::FindAllAsync(deviceSelector).get();
 }
 
-void MidiDeviceService::midiInPort_messageReceived(MidiInPort const &source, MidiMessageReceivedEventArgs const &args)
+void MidiDeviceService::midiInPort_messageReceived(MidiInPort const& source, MidiMessageReceivedEventArgs const& args)
 {
 	auto data = args.Message().RawData().data();
 	StuffMIDIMessage(0, data[0], data[1], data[2]);
