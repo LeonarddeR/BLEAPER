@@ -68,21 +68,24 @@ fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateCo
 	{
 		auto deviceOp = MidiInPort::FromIdAsync(deviceId);
 		co_await resume_after(1s);
-		ShowMessageBox(s.str(), "eor", 0);
-		try
-		{
-			currentDevice = co_await deviceOp;
-		}
-		catch (hresult_canceled const&)
-		{
+		if (deviceOp.Status() == AsyncStatus::Started) {
 			currentDevice = nullptr;
 		}
-		catch (hresult_illegal_method_call const&)
-		{
-			currentDevice = nullptr;
+		else {
+			try
+			{
+				currentDevice = co_await deviceOp;
+			}
+			catch (hresult_canceled const&)
+			{
+				currentDevice = nullptr;
+			}
+			catch (hresult_illegal_method_call const&)
+			{
+				currentDevice = nullptr;
+			}
 		}
-		if (!currentDevice)
-		{
+		if (!currentDevice) {
 			ShowMessageBox("Couldn't connect to device.", "Connection Error", 0);
 			co_return;
 		}
