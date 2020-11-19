@@ -67,7 +67,8 @@ fire_and_forget MidiDeviceService::connectDevice(hstring deviceId, bool updateCo
 	if (!deviceId.empty())
 	{
 		auto deviceOp = MidiInPort::FromIdAsync(deviceId);
-		([](auto op) -> fire_and_forget { co_await resume_after(3s); op.Cancel(); })(deviceOp);
+		co_await resume_after(1s);
+		ShowMessageBox(s.str(), "eor", 0);
 		try
 		{
 			currentDevice = co_await deviceOp;

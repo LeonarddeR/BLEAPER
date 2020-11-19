@@ -13,7 +13,7 @@
 #define REAPERAPI_WANT_GetExtState
 #define REAPERAPI_WANT_SetExtState
 
-void menuhook(const char *menuidstr, HMENU hMenu, int flag);
+void menuhook(const char* menuidstr, HMENU hMenu, int flag);
 bool handleCommand(int command, int flag);
 void openDeviceDialog();
 
@@ -30,7 +30,7 @@ public:
 private:
 	HWND dialogHwnd;
 	HWND comboHwnd;
-	winrt::Windows::Devices::Enumeration::DeviceInformationCollection deviceInformationCollection{nullptr};
+	winrt::Windows::Devices::Enumeration::DeviceInformationCollection deviceInformationCollection{ nullptr };
 
 	void onOk();
 
