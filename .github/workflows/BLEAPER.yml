@@ -15,8 +15,11 @@ jobs:
         with:
           submodules: "recursive"
       - uses: microsoft/setup-msbuild@v1
+      - uses: nuget/setup-nuget@v1
+        with:
+          nuget-version: latest
       - name: Restore Dependencies
-        run: msbuild BLEAPER.sln /t:restore
+        run: nuget restore BLEAPER.sln
       - name: Build x64
         run: msbuild BLEAPER.sln /t:Rebuild /p:Configuration=Debug /p:Platform=x64
       - name: Build x86
