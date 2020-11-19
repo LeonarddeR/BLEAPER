@@ -1,0 +1,21 @@
+name: BLEAPER CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: microsoft/setup-msbuild@v1
+    - name: Restore Dependencies
+      run: BLEAPER.sln /t:restore
+    - name: Build x64
+      run: msbuild BLEAPER.sln /t:Rebuild /p:Configuration=Debug /p:Platform=x64
+    - name: Build x86
+      run: msbuild BLEAPER.sln /t:Rebuild /p:Configuration=Debug /p:Platform=x86
