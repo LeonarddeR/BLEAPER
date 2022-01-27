@@ -24,3 +24,7 @@ jobs:
         run: msbuild BLEAPER.sln /t:Rebuild /p:Configuration=Debug /p:Platform=x64
       - name: Build x86
         run: msbuild BLEAPER.sln /t:Rebuild /p:Configuration=Debug /p:Platform=x86
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: output_*.*
